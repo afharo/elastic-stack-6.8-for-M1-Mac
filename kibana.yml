@@ -1,9 +1,3 @@
 elasticsearch.hosts: ["http://elasticsearch:9200"]
 server.name: "localhost"
 server.host: "0.0.0.0"
-
-elasticsearch.customHeaders:
-  x-elastic-app-auth: TEST
-
-elasticsearch.logQueries: true
-logging.verbose: true
