@@ -1,21 +1,41 @@
 version: '2.2'
 services:
   elasticsearch:
-    build: ./elasticsearch
-    # image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
-    # volumes:
-    #   - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    # build: ./elasticsearch
+    # image: docker.elastic.co/elasticsearch/elasticsearch:8.7.0
+    # image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0-SNAPSHOT
+    volumes:
+      - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./elasticsearch/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # - indices.write_ack_delay_interval=200ms
+      # - indices.write_ack_delay_randomness_bound=100ms
+      # - node._internal.default_refresh_interval=5s
     ports:
       - 9200:9200
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.8.23
+    # image: docker.elastic.co/kibana/kibana:8.6.0
+    # image: docker.elastic.co/kibana/kibana:7.17.9
+    # image: docker.elastic.co/kibana/kibana:7.17.11-SNAPSHOT
+    image: docker.elastic.co/kibana/kibana:8.8.0-SNAPSHOT
+    # image: docker.elastic.co/cloud-release/kibana-cloud:8.8.0-118443e6
+    # image: docker.elastic.co/kibana-ci/kibana:git-3480acddd8dd
     links:
       - elasticsearch
     volumes:
       - ./kibana.yml:/usr/share/kibana/config/kibana.yml
-      - ./kibana.log:/app/logs/kibana.log
+      - ./kibana.log:/var/log/kibana/kibana.log
     ports:
       - 5601:5601
+    depends_on:
+      setup_kibana_system_pass:
+        condition: service_completed_successfully
+  setup_kibana_system_pass:
+    image: curlimages/curl:8.00.1
+    restart: on-failure
+    command: "-v -s -S -f -uelastic:changeme -XPOST -d'{\"password\": \"changeme\"}' -HContent-Type:application/json http://elasticsearch:9200/_security/user/kibana_system/_password"
+    links:
+      - elasticsearch
 
